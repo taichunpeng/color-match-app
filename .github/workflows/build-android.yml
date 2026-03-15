@@ -8,7 +8,7 @@ on:
 jobs:
   build-android:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
 
     steps:
       # 1. 拉取代码
@@ -37,53 +37,53 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 6. 强制写入所有 Android SDK 许可证文件（彻底绕过交互式确认）
-      - name: Accept Android SDK licenses (force write)
+      # 6. 接受 Android SDK 许可证（直接写文件 + 用完整路径运行 sdkmanager）
+      - name: Setup Android SDK licenses
         run: |
-          LICENSES_DIR="${ANDROID_SDK_ROOT}/licenses"
+          # 找到 sdkmanager 的完整路径
+          SDKMANAGER=$(find /usr/local/lib/android/sdk /opt -name sdkmanager 2>/dev/null | head -1)
+          echo "sdkmanager path: $SDKMANAGER"
+
+          # 先写入许可证文件
+          LICENSES_DIR="${ANDROID_HOME}/licenses"
           mkdir -p "$LICENSES_DIR"
-          # 写入所有已知许可证的哈希值
-          echo -e "\n24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$LICENSES_DIR/android-sdk-license"
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" >> "$LICENSES_DIR/android-sdk-license"
-          echo -e "\nd975f751698a77b662f1254ddbeed3901e976f5a" >> "$LICENSES_DIR/android-sdk-license"
-          echo -e "\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$LICENSES_DIR/android-sdk-preview-license"
-          echo -e "\n84831b9409646a918e30573bab4c9c91346d8abd" > "$LICENSES_DIR/android-googletv-license"
-          echo -e "\n601085b94cd77f0b54ff86406957099ebe79c4d5" > "$LICENSES_DIR/android-googletv-license"
-          echo -e "\n859f317696f67ef3d7f30a50a5560e7834b43903" > "$LICENSES_DIR/google-gdk-license"
-          echo -e "\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$LICENSES_DIR/intel-android-extra-license"
-          echo -e "\nd975f751698a77b662f1254ddbeed3901e976f5a" > "$LICENSES_DIR/android-googlexr-license"
-          echo -e "\ne9acab5b5fbb560a72cfaecce8946896ff6aab9d" > "$LICENSES_DIR/android-googlexr-license"
-          echo -e "\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a" > "$LICENSES_DIR/mips-android-sysimage-license"
-          echo "✓ 许可证文件已写入:"
+          printf '\n24333f8a63b6825ea9c5514f83c2829b004d1fee\n84831b9409646a918e30573bab4c9c91346d8abd\nd975f751698a77b662f1254ddbeed3901e976f5a' > "$LICENSES_DIR/android-sdk-license"
+          printf '\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a' > "$LICENSES_DIR/android-sdk-preview-license"
+          printf '\n601085b94cd77f0b54ff86406957099ebe79c4d5\n84831b9409646a918e30573bab4c9c91346d8abd' > "$LICENSES_DIR/android-googletv-license"
+          printf '\n859f317696f67ef3d7f30a50a5560e7834b43903' > "$LICENSES_DIR/google-gdk-license"
+          printf '\n33b6a2b64607f11b759f320ef9dff4ae5c47d97a' > "$LICENSES_DIR/intel-android-extra-license"
+          printf '\nd975f751698a77b662f1254ddbeed3901e976f5a\ne9acab5b5fbb560a72cfaecce8946896ff6aab9d' > "$LICENSES_DIR/android-googlexr-license"
+          echo "License files written:"
           ls -la "$LICENSES_DIR"
 
-      # 7. 安装必要的 Android SDK 组件
-      - name: Install Android SDK components
-        run: |
-          sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0"
-        env:
-          ANDROID_SDK_ROOT: ${{ env.ANDROID_SDK_ROOT }}
+          # 用完整路径安装必要组件
+          if [ -n "$SDKMANAGER" ]; then
+            yes | "$SDKMANAGER" --licenses 2>/dev/null || true
+            "$SDKMANAGER" "platform-tools" "platforms;android-34" "build-tools;34.0.0" 2>&1
+          else
+            echo "sdkmanager not found, trying cmdline-tools path..."
+            CMDLINE="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+            yes | "$CMDLINE" --licenses 2>/dev/null || true
+            "$CMDLINE" "platform-tools" "platforms;android-34" "build-tools;34.0.0" 2>&1
+          fi
 
-      # 8. 初始化 Capacitor Android 项目
+      # 7. 初始化 Capacitor Android 项目
       - name: Init Capacitor Android
         run: |
           npx cap add android || echo "android platform already exists"
           npx cap sync android
 
-      # 9. 给 Gradle 加执行权限
+      # 8. 给 Gradle 加执行权限
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      # 10. 打包 Debug APK
+      # 9. 打包 Debug APK
       - name: Build Debug APK
         run: |
           cd android
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1
 
-      # 11. 上传 APK
+      # 10. 上传 APK
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
