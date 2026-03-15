@@ -1,0 +1,72 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:   # 也支持在 GitHub 网页上手动触发
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      # 1. 拉取代码
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # 2. 设置 Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # 3. 安装 npm 依赖
+      - name: Install dependencies
+        run: npm ci
+
+      # 4. 构建 Web 产物
+      - name: Build web assets
+        run: npm run build
+
+      # 5. 设置 JDK 17
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 6. 设置 Android SDK
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 7. 初始化 Capacitor Android 项目（如果 android/ 目录不存在）
+      - name: Init Capacitor Android
+        run: |
+          npx cap add android || echo "android platform already exists"
+          npx cap sync android
+
+      # 8. 给 Gradle 加执行权限
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
+
+      # 9. 打包 Debug APK（无需签名，可直接安装）
+      - name: Build Debug APK
+        run: |
+          cd android
+          ./gradlew assembleDebug --no-daemon --stacktrace
+
+      # 10. 上传 APK 为 Artifact（可在 Actions 页面下载）
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: ColorMatch-APK
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          retention-days: 30   # 保留 30 天
+
+      # 可选：如果你想打 Release 包（需要签名密钥），取消下面的注释
+      # - name: Build Release APK
+      #   run: |
+      #     cd android
+      #     ./gradlew assembleRelease --no-daemon

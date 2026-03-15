@@ -1,0 +1,34 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="152" height="152" viewBox="0 0 152 152">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1e1b4b"/>
+      <stop offset="100%" style="stop-color:#312e81"/>
+    </linearGradient>
+    <linearGradient id="spectrum" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#f43f5e"/>
+      <stop offset="25%"  style="stop-color:#f59e0b"/>
+      <stop offset="50%"  style="stop-color:#22c55e"/>
+      <stop offset="75%"  style="stop-color:#3b82f6"/>
+      <stop offset="100%" style="stop-color:#a855f7"/>
+    </linearGradient>
+    <clipPath id="roundRect">
+      <rect width="152" height="152" rx="33.44" ry="33.44"/>
+    </clipPath>
+  </defs>
+  <!-- 背景 -->
+  <rect width="152" height="152" rx="33.44" ry="33.44" fill="url(#bg)"/>
+  <!-- 相机机身 -->
+  <rect x="34.199999999999996" y="39.519999999999996" width="83.60000000000001" height="60.800000000000004"
+        rx="7.6000000000000005" ry="7.6000000000000005"
+        fill="none" stroke="white" stroke-width="6.08" stroke-linejoin="round"/>
+  <!-- 镜头圆 -->
+  <circle cx="76" cy="71.44" r="19.76"
+          fill="none" stroke="white" stroke-width="6.08"/>
+  <!-- 取景器小方块 -->
+  <rect x="44.839999999999996" y="29.639999999999993" 
+        width="22.8" height="10.64"
+        rx="3.04" ry="3.04" fill="white" opacity="0.9"/>
+  <!-- 彩色调色光谱条 -->
+  <rect x="26.6" y="109.44" width="98.8" height="10.64"
+        rx="5.32" ry="5.32" fill="url(#spectrum)"/>
+</svg>

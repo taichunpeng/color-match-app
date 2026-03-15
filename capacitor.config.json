@@ -1,0 +1,20 @@
+{
+  "appId": "com.colormatch.app",
+  "appName": "一键仿色",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  },
+  "android": {
+    "backgroundColor": "#0f172a",
+    "allowMixedContent": true,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "plugins": {
+    "Camera": {
+      "permissions": ["camera", "photos"]
+    }
+  }
+}
